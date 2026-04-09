@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check-in Coach Premium</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#F0F4F8;min-height:100vh;padding:12px}
+.app{max-width:500px;margin:0 auto}
+
+.hdr{background:#1E3A5F;border-radius:16px;padding:20px;margin-bottom:10px}
+.hdr-name{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px}
+.hdr-sub{color:#93C5FD;font-size:13px}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start}
+.badge{background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:1px}
+
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.nav-btn{padding:12px;border:2px solid #CBD5E1;border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:#64748B;transition:all 0.15s}
+.nav-btn.active{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
+
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:10px;border:1px solid #E2E8F0}
+.section-title{font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+
+.sl-wrap{margin-bottom:12px}
+.sl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sl-label{font-size:14px;color:#334155;font-weight:500}
+.sl-val{font-size:14px;font-weight:700;color:#1E3A5F;min-width:44px;text-align:right}
+input[type=range]{width:100%;height:6px;-webkit-appearance:none;background:#E2E8F0;border-radius:3px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#2563EB;cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.sl-hints{display:flex;justify-content:space-between;font-size:10px;color:#94A3B8;margin-top:4px}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.chip{padding:7px 14px;border:1.5px solid #CBD5E1;border-radius:20px;font-size:13px;cursor:pointer;background:#fff;color:#64748B;font-weight:500;transition:all 0.12s;user-select:none}
+.chip:hover{border-color:#2563EB;color:#1E3A5F}
+.chip.sel{border-color:#2563EB;background:#EFF6FF;color:#1E3A5F;font-weight:700}
+.chip.sel-g{border-color:#16A34A;background:#F0FDF4;color:#166534;font-weight:700}
+.chip.sel-r{border-color:#DC2626;background:#FEF2F2;color:#991B1B;font-weight:700}
+.chip.sel-a{border-color:#D97706;background:#FFFBEB;color:#92400E;font-weight:700}
+
+.stars{display:flex;gap:12px;margin-top:8px}
+.star{font-size:28px;cursor:pointer;color:#E2E8F0;transition:color 0.1s;line-height:1;user-select:none}
+.star.on{color:#F59E0B}
+
+textarea{width:100%;border:1.5px solid #CBD5E1;border-radius:10px;padding:12px;font-size:14px;color:#1E293B;background:#fff;resize:none;font-family:inherit;line-height:1.6;margin-top:4px}
+textarea:focus{outline:none;border-color:#2563EB}
+
+input[type=text]{width:100%;border:1.5px solid #CBD5E1;border-radius:10px;padding:12px 14px;font-size:15px;color:#1E293B;background:#fff;font-family:inherit}
+input[type=text]:focus{outline:none;border-color:#2563EB}
+input[type=password]{width:100%;border:1.5px solid #CBD5E1;border-radius:10px;padding:14px;font-size:22px;color:#1E293B;background:#fff;font-family:inherit;text-align:center;letter-spacing:8px}
+input[type=password]:focus{outline:none;border-color:#2563EB}
+
+.btn-send{width:100%;padding:16px;background:#1E3A5F;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:4px}
+.btn-send:hover{background:#2563EB}
+.btn-send:active{transform:scale(0.98)}
+.btn-send:disabled{background:#94A3B8;cursor:not-allowed}
+.btn-green{background:#16A34A}
+.btn-green:hover{background:#15803D}
+
+.success-box{background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:16px;padding:32px 20px;text-align:center;margin-bottom:10px}
+.success-ico{font-size:48px;display:block;margin-bottom:12px}
+.success-box h2{color:#14532D;font-size:20px;font-weight:700;margin-bottom:6px}
+.success-box p{color:#166534;font-size:14px;line-height:1.6}
+
+.name-box{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.name-box p{font-size:13px;color:#1E40AF;margin-bottom:8px;font-weight:500}
+
+.metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}
+.metric{text-align:center;background:#F8FAFC;border-radius:8px;padding:8px 4px;border:1px solid #E2E8F0}
+.metric .v{font-size:16px;font-weight:700;color:#1E293B;line-height:1}
+.metric .l{font-size:9px;color:#94A3B8;margin-top:3px}
+
+.bdg{display:inline-block;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin:2px}
+.bdg-g{background:#DCFCE7;color:#166534}
+.bdg-b{background:#DBEAFE;color:#1E40AF}
+.bdg-a{background:#FEF3C7;color:#92400E}
+.bdg-r{background:#FEE2E2;color:#991B1B}
+.bdg-red{background:#FEE2E2;color:#991B1B;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #FCA5A5}
+
+.entry{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;margin-bottom:8px}
+.entry-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1E40AF;flex-shrink:0}
+.ename{font-size:15px;font-weight:700;color:#1E293B;margin-left:8px}
+.edate{font-size:11px;color:#94A3B8}
+.enote{font-size:12px;color:#64748B;background:#F8FAFC;padding:8px 10px;border-radius:8px;border-left:3px solid #2563EB;font-style:italic;margin-top:8px}
+
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center}
+.stat .v{font-size:22px;font-weight:700;color:#1E293B}
+.stat .l{font-size:10px;color:#94A3B8;margin-top:3px}
+
+.filter-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filter-chip{padding:5px 12px;border:1px solid #CBD5E1;border-radius:20px;font-size:12px;cursor:pointer;background:#fff;color:#64748B;font-weight:500}
+.filter-chip.on{background:#1E3A5F;color:#fff;border-color:#1E3A5F;font-weight:700}
+
+.sub-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.sub-btn{padding:9px 4px;border:1.5px solid #CBD5E1;border-radius:10px;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:#64748B}
+.sub-btn.active{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
+
+.athl-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;background:#fff}
+.athl-info{display:flex;align-items:center;gap:10px}
+.athl-meta{font-size:11px;color:#94A3B8;margin-top:2px}
+.copy-btn{padding:7px 14px;border:1.5px solid #2563EB;border-radius:8px;background:#EFF6FF;color:#1E40AF;font-size:12px;font-weight:700;cursor:pointer}
+.copy-btn:hover{background:#DBEAFE}
+.del-btn{padding:7px 10px;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#94A3B8;font-size:12px;cursor:pointer;margin-left:6px}
+.del-btn:hover{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.link-url{font-size:11px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:7px 10px;font-family:monospace;word-break:break-all;margin-top:6px;color:#64748B}
+
+.spinner{text-align:center;padding:40px;color:#94A3B8;font-size:14px}
+.empty{text-align:center;padding:40px;color:#94A3B8;font-size:14px}
+.err{background:#FEE2E2;border:1px solid #FCA5A5;border-radius:10px;padding:14px;color:#991B1B;font-size:13px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="hdr-name" id="hdr-name">Check-in journalier</div>
+      <div class="badge">PREMIUM</div>
+    </div>
+    <div class="hdr-sub" id="hdr-sub">Ton coach suit ta progression en temps réel</div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" id="btn-eleve" onclick="switchView('eleve')">Élève</button>
+    <button class="nav-btn" id="btn-coach" onclick="switchView('coach-login')">Coach</button>
+  </div>
+
+  <div id="view-eleve"></div>
+  <div id="view-coach-login" style="display:none"></div>
+  <div id="view-coach" style="display:none"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — tes vraies valeurs Supabase
+// ═══════════════════════════════════════════
+var SUPA_URL  = "https://aeagvllbavegwtzfohmg.supabase.co";
+var SUPA_KEY  = "sb_publishable_CQuSUJwArWUPO0ncg3gTnA_nvPa0tRP";
+var COACH_PIN = "1234";
+// ═══════════════════════════════════════════
+
+var db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// Lire le prénom depuis l'URL — méthode ultra-robuste
+var athleteName = "";
+try {
+  var qs = window.location.search || location.search || "";
+  var parts = qs.replace("?","").split("&");
+  for(var i=0;i<parts.length;i++){
+    var kv = parts[i].split("=");
+    if(kv[0]==="athlete"||kv[0]==="name"||kv[0]==="prenom"){
+      athleteName = decodeURIComponent(kv[1]||"").replace(/\+/g," ").trim();
+      break;
+    }
+  }
+} catch(e){ athleteName = ""; }
+
+var currentView = "eleve";
+var coachTab    = "dashboard";
+var filterName  = "tous";
+var repas       = [];
+var zones       = [];
+var stars       = 3;
+var allData     = [];
+var allAthletes = [];
+
+function switchView(v){
+  currentView = v;
+  document.getElementById("view-eleve").style.display       = v==="eleve"       ? "" : "none";
+  document.getElementById("view-coach-login").style.display = v==="coach-login" ? "" : "none";
+  document.getElementById("view-coach").style.display       = v==="coach"       ? "" : "none";
+  document.getElementById("btn-eleve").className = "nav-btn"+(v==="eleve"?" active":"");
+  document.getElementById("btn-coach").className = "nav-btn"+(v.indexOf("coach")>=0?" active":"");
+  if(v==="coach") loadCoach();
+}
+
+// ═══════════════════════════════════════════
+// VUE ÉLÈVE
+// ═══════════════════════════════════════════
+function buildEleve(success){
+  var el = document.getElementById("view-eleve");
+
+  if(athleteName){
+    document.getElementById("hdr-name").textContent = "Bonjour "+athleteName+" !";
+    document.getElementById("hdr-sub").textContent  = "2 minutes pour tenir ton coach informé";
+  }
+
+  if(success){
+    el.innerHTML =
+      '<div class="success-box">'
+      +'<span class="success-ico">✅</span>'
+      +'<h2>Envoyé, '+(athleteName||"champion")+' !</h2>'
+      +'<p>Ton coach a bien reçu ton check-in.<br>Continue comme ça, tu es sur la bonne voie !</p>'
+      +'</div>'
+      +'<button class="btn-send btn-green" onclick="buildEleve(false)">Faire un autre check-in</button>';
+    return;
+  }
+
+  repas  = [];
+  zones  = [];
+  stars  = 3;
+
+  var nameBlock = "";
+  if(!athleteName){
+    nameBlock =
+      '<div class="name-box">'
+      +'<p>Entre ton prénom pour personnaliser ton check-in :</p>'
+      +'<input type="text" id="inp-name" placeholder="Ton prénom" maxlength="30" '
+      +'oninput="athleteName=this.value.trim();'
+      +'document.getElementById(\'hdr-name\').textContent=athleteName?\'Bonjour \'+athleteName+\' !\':\'Check-in journalier\'"/>'
+      +'</div>';
+  }
+
+  el.innerHTML = nameBlock
+  +'<div class="card">'
+  +'<div class="section-title">Sommeil & récupération</div>'
+  +sl("sl-sleep","Durée de nuit","3","12","7",".5","h","Peu de sommeil","Nuit complète")
+  +sl("sl-sleepq","Qualité du sommeil","1","10","7","1","/10","Très mauvaise","Excellente")
+  +sl("sl-recov","Récupération musculaire","1","10","7","1","/10","Courbatures ++","Frais et dispo")
+  +'</div>'
+
+  +'<div class="card">'
+  +'<div class="section-title">Énergie & mental</div>'
+  +sl("sl-energy","Énergie","1","10","7","1","/10","Épuisé","Plein d\'énergie")
+  +sl("sl-motiv","Motivation sport","1","10","7","1","/10","Aucune envie","Ultra motivé")
+  +sl("sl-stress","Stress","1","10","4","1","/10","Très stressé","Zen total")
+  +sl("sl-mood","Humeur","1","10","7","1","/10","Moral bas","Excellente forme")
+  +'</div>'
+
+  +'<div class="card">'
+  +'<div class="section-title">Hydratation</div>'
+  +'<div class="chips" id="g-hydra">'
+  +chip("< 1L","g-hydra","","sel")
+  +chip("1 – 1,5L","g-hydra","","sel")
+  +chip("1,5 – 2L","g-hydra","sel","sel")
+  +chip("2 – 2,5L","g-hydra","","sel")
+  +chip("2,5L et +","g-hydra","","sel")
+  +'</div></div>'
+
+  +'<div class="card">'
+  +'<div class="section-title">Alimentation</div>'
+  +'<p style="font-size:13px;color:#64748B;margin-bottom:6px">Qualité globale aujourd\'hui</p>'
+  +'<div class="chips" id="g-nutri">'
+  +chip("Très bonne","g-nutri","","sel-g")
+  +chip("Bonne","g-nutri","sel-g","sel-g")
+  +chip("Moyenne","g-nutri","","sel-a")
+  +chip("Faible","g-nutri","","sel-r")
+  +chip("Mauvaise","g-nutri","","sel-r")
+  +'</div>'
+  +'<p style="font-size:13px;color:#64748B;margin:10px 0 6px">Repas pris <span style="font-size:11px">(plusieurs choix)</span></p>'
+  +'<div class="chips" id="g-repas">'
+  +chipM("Petit déjeuner","g-repas")
+  +chipM("Déjeuner","g-repas")
+  +chipM("Dîner","g-repas")
+  +chipM("Collation","g-repas")
+  +'</div>'
+  +'<p style="font-size:13px;color:#64748B;margin:10px 0 6px">Objectifs nutritionnels respectés ?</p>'
+  +'<div class="chips" id="g-obj">'
+  +chip("Oui, totalement","g-obj","","sel-g")
+  +chip("En grande partie","g-obj","sel-g","sel-g")
+  +chip("Partiellement","g-obj","","sel-a")
+  +chip("Non","g-obj","","sel-r")
+  +'</div></div>'
+
+  +'<div class="card">'
+  +'<div class="section-title">Activité physique</div>'
+  +'<div class="chips" id="g-sport">'
+  +chip("Séance complète","g-sport","sel-g","sel-g")
+  +chip("Séance courte","g-sport","","sel-g")
+  +chip("Cardio seul","g-sport","","sel")
+  +chip("Repos actif","g-sport","","sel-a")
+  +chip("Repos total","g-sport","","sel-a")
+  +chip("Blessure","g-sport","","sel-r")
+  +'</div>'
+  +'<p style="font-size:13px;color:#64748B;margin:10px 0 4px">Qualité de la séance</p>'
+  +'<div class="stars" id="stars-wrap">'
+  +[1,2,3,4,5].map(function(n){return '<span class="star'+(n<=3?" on":"")+'" id="s'+n+'" onclick="setStar('+n+')">★</span>';}).join("")
+  +'</div>'
+  +'<p style="font-size:10px;color:#94A3B8;margin-top:4px">1 = décevante · 3 = correcte · 5 = excellente</p>'
+  +'</div>'
+
+  +'<div class="card">'
+  +'<div class="section-title">Corps & douleurs</div>'
+  +'<div class="chips" id="g-pain">'
+  +chip("Aucune","g-pain","sel-g","sel-g")
+  +chip("Légères courbatures","g-pain","","sel-g")
+  +chip("Courbatures marquées","g-pain","","sel-a")
+  +chip("Gêne musculaire","g-pain","","sel-a")
+  +chip("Douleur articulaire","g-pain","","sel-r")
+  +chip("Blessure","g-pain","","sel-r")
+  +'</div>'
+  +'<p style="font-size:13px;color:#64748B;margin:10px 0 6px">Zones concernées <span style="font-size:11px">(plusieurs choix)</span></p>'
+  +'<div class="chips" id="g-zones">'
+  +chipM("Aucune","g-zones")
+  +chipM("Épaules","g-zones")
+  +chipM("Dos","g-zones")
+  +chipM("Hanches","g-zones")
+  +chipM("Genoux","g-zones")
+  +chipM("Chevilles","g-zones")
+  +chipM("Autre","g-zones")
+  +'</div>'
+  +sl("sl-fatigue","Fatigue générale","1","10","5","1","/10","Épuisé","Plein de forme")
+  +'</div>'
+
+  +'<div class="card">'
+  +'<div class="section-title">Message pour ton coach</div>'
+  +'<textarea id="ta-notes" rows="4" placeholder="Comment tu te sens ? Une question, une douleur, une victoire à partager… Ton coach lit tout."></textarea>'
+  +'</div>'
+
+  +'<button class="btn-send" id="btn-submit" onclick="submitForm()">Envoyer mon check-in ✓</button>'
+  +'<p style="text-align:center;font-size:11px;color:#94A3B8;margin-top:10px;margin-bottom:20px">Données confidentielles — accessibles uniquement à ton coach</p>';
+}
+
+// helpers
+function sl(id,label,min,max,val,step,unit,lo,hi){
+  var startTxt = val+(step==="0.5"?"h":"/10")===val+unit ? val+unit : val+unit;
+  return '<div class="sl-wrap">'
+    +'<div class="sl-top"><span class="sl-label">'+label+'</span><span class="sl-val" id="v-'+id+'">'+val+unit+'</span></div>'
+    +'<input type="range" min="'+min+'" max="'+max+'" value="'+val+'" step="'+step+'" '
+    +'oninput="document.getElementById(\'v-'+id+'\').textContent=(parseFloat(this.value)'+(unit==="h"?'.toFixed(1)':'')+'+\''+unit+'\')">'
+    +'<div class="sl-hints"><span>'+lo+'</span><span>'+hi+'</span></div>'
+    +'</div>';
+}
+
+function chip(label,grp,activeCls,selCls){
+  return '<span class="chip'+(activeCls?" "+activeCls:"")+'" data-grp="'+grp+'" data-sel="'+selCls+'" onclick="selChip(this)">'+label+'</span>';
+}
+function chipM(label,grp){
+  return '<span class="chip" data-grp="'+grp+'" onclick="togChip(this,\''+grp+'\')">'+label+'</span>';
+}
+
+function selChip(el){
+  var grp = el.getAttribute("data-grp");
+  var selCls = el.getAttribute("data-sel");
+  document.querySelectorAll('[data-grp="'+grp+'"]').forEach(function(c){c.className="chip";});
+  el.className = "chip "+selCls;
+}
+
+function togChip(el,grp){
+  if(el.classList.contains("sel-g")){
+    el.className="chip";
+  } else {
+    el.className="chip sel-g";
+  }
+}
+
+function setStar(n){
+  stars=n;
+  for(var i=1;i<=5;i++) document.getElementById("s"+i).className="star"+(i<=n?" on":"");
+}
+
+function getChip(grp){
+  var el=document.querySelector('[data-grp="'+grp+'"].sel,[data-grp="'+grp+'"].sel-g,[data-grp="'+grp+'"].sel-r,[data-grp="'+grp+'"].sel-a');
+  return el ? el.textContent.trim() : "";
+}
+function getMultiChip(grp){
+  var els=document.querySelectorAll('[data-grp="'+grp+'"].sel-g');
+  return Array.from(els).map(function(e){return e.textContent.trim();}).join(", ");
+}
+function getSl(id){
+  var el=document.getElementById("v-"+id);
+  return el ? parseFloat(el.textContent) : 0;
+}
+
+async function submitForm(){
+  if(!athleteName){
+    var inp=document.getElementById("inp-name");
+    if(inp) athleteName=inp.value.trim();
+  }
+  if(!athleteName){
+    alert("Merci d'entrer ton prénom pour continuer.");
+    return;
+  }
+  var btn=document.getElementById("btn-submit");
+  btn.disabled=true; btn.textContent="Envoi en cours…";
+
+  var payload={
+    athlete_name:        athleteName,
+    sleep_duration:      getSl("sl-sleep"),
+    sleep_quality:       getSl("sl-sleepq"),
+    recovery:            getSl("sl-recov"),
+    energy:              getSl("sl-energy"),
+    motivation:          getSl("sl-motiv"),
+    stress:              getSl("sl-stress"),
+    mood:                getSl("sl-mood"),
+    hydration:           getChip("g-hydra"),
+    nutrition_quality:   getChip("g-nutri"),
+    nutrition_objective: getChip("g-obj"),
+    meals:               getMultiChip("g-repas"),
+    sport_type:          getChip("g-sport"),
+    sport_quality:       stars,
+    pain:                getChip("g-pain"),
+    pain_zones:          getMultiChip("g-zones")||"Aucune",
+    fatigue:             getSl("sl-fatigue"),
+    notes:               (document.getElementById("ta-notes")||{value:""}).value.trim()
+  };
+
+  var res = await db.from("checkins").insert([payload]);
+  if(res.error){
+    btn.disabled=false; btn.textContent="Envoyer mon check-in ✓";
+    document.getElementById("view-eleve").insertAdjacentHTML("afterbegin",
+      '<div class="err">Erreur : '+res.error.message+'<br><small>Vérifie la connexion Supabase.</small></div>');
+    return;
+  }
+  buildEleve(true);
+}
+
+// ═══════════════════════════════════════════
+// VUE COACH LOGIN
+// ═══════════════════════════════════════════
+function buildLogin(){
+  document.getElementById("view-coach-login").innerHTML=
+    '<div class="card" style="text-align:center;padding:24px 16px;max-width:300px;margin:0 auto">'
+    +'<div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Accès coach</div>'
+    +'<p style="font-size:13px;color:#64748B;margin-bottom:16px">Code PIN à 4 chiffres</p>'
+    +'<input type="password" inputmode="numeric" maxlength="4" id="inp-pin" placeholder="••••" autocomplete="off" '
+    +'oninput="tryPin(this.value)"/>'
+    +'<p style="font-size:11px;color:#94A3B8;margin-top:10px">Code par défaut : 1234</p>'
+    +'</div>';
+}
+
+function tryPin(v){
+  if(v.length===4){
+    if(v===COACH_PIN){ switchView("coach"); }
+    else{
+      var el=document.getElementById("inp-pin");
+      el.style.borderColor="#DC2626"; el.value="";
+      setTimeout(function(){el.style.borderColor="";},800);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// VUE COACH DASHBOARD
+// ═══════════════════════════════════════════
+async function loadCoach(){
+  document.getElementById("view-coach").innerHTML='<div class="spinner">Chargement…</div>';
+  var r1=await db.from("checkins").select("*").order("created_at",{ascending:false}).limit(300);
+  var r2=await db.from("athletes").select("*").order("name");
+  if(r1.error||r2.error){
+    document.getElementById("view-coach").innerHTML=
+      '<div class="err">Erreur Supabase : '+(r1.error||r2.error).message+'</div>';
+    return;
+  }
+  allData=r1.data||[];
+  allAthletes=r2.data||[];
+  renderCoach();
+}
+
+function renderCoach(){
+  var el=document.getElementById("view-coach");
+  var filtered=filterName==="tous"?allData:allData.filter(function(e){return e.athlete_name===filterName;});
+  var names=[...new Set(allData.map(function(e){return e.athlete_name;}))].sort();
+
+  var subNav='<div class="sub-nav">'
+    +['dashboard','athletes','details'].map(function(t,i){
+      var lbl=["Dashboard","Élèves & liens","Détails"][i];
+      return '<button class="sub-btn'+(coachTab===t?" active":"")+'" onclick="coachTab=\''+t+'\';renderCoach()">'+lbl+'</button>';
+    }).join("")
+    +'</div>';
+
+  var content="";
+  if(coachTab==="dashboard") content=buildDashboard(filtered,names);
+  else if(coachTab==="athletes") content=buildAthletes(names);
+  else content=buildDetails(filtered,names);
+
+  el.innerHTML=subNav+content;
+}
+
+function avg(arr,key){
+  if(!arr.length) return "–";
+  var sum=arr.reduce(function(s,e){return s+(parseFloat(e[key])||0);},0);
+  return (sum/arr.length).toFixed(1)*1;
+}
+
+function buildDashboard(filtered,names){
+  var ae=avg(filtered,"energy"), as_=avg(filtered,"sleep_duration"), am=avg(filtered,"motivation");
+  var trained=filtered.filter(function(e){return e.sport_type&&(e.sport_type.indexOf("complète")>=0||e.sport_type.indexOf("courte")>=0||e.sport_type.indexOf("Cardio")>=0);}).length;
+  var alerts=filtered.filter(function(e){return e.energy<=3||e.stress>=8||e.mood<=3||(e.pain&&(e.pain.indexOf("Blessure")>=0||e.pain.indexOf("articulaire")>=0));}).length;
+
+  var filters='<div class="filter-wrap">'
+    +'<span class="filter-chip'+(filterName==="tous"?" on":"")+'" onclick="filterName=\'tous\';renderCoach()">Tous ('+allData.length+')</span>'
+    +names.map(function(n){
+      var cnt=allData.filter(function(e){return e.athlete_name===n;}).length;
+      return '<span class="filter-chip'+(filterName===n?" on":"")+'" onclick="filterName=\''+n+'\';renderCoach()">'+n+' ('+cnt+')</span>';
+    }).join("")+'</div>';
+
+  var stats='<div class="stat-grid">'
+    +'<div class="stat"><div class="v">'+ae+'<span style="font-size:11px">/10</span></div><div class="l">Énergie moy.</div></div>'
+    +'<div class="stat"><div class="v">'+as_+'<span style="font-size:11px">h</span></div><div class="l">Sommeil moy.</div></div>'
+    +'<div class="stat"><div class="v">'+am+'<span style="font-size:11px">/10</span></div><div class="l">Motivation moy.</div></div>'
+    +'<div class="stat"><div class="v">'+trained+'</div><div class="l">Séances faites</div></div>'
+    +'<div class="stat"><div class="v" style="color:'+(alerts>0?"#991B1B":"#16A34A")+'">'+alerts+'</div><div class="l">Alertes</div></div>'
+    +'<div class="stat"><div class="v">'+filtered.length+'</div><div class="l">Check-ins</div></div>'
+    +'</div>';
+
+  var cards=filtered.slice(0,10).map(entryHTML).join("");
+  if(!cards) cards='<div class="empty">Aucun check-in pour l\'instant.</div>';
+
+  return filters+stats+cards;
+}
+
+function entryHTML(e){
+  var d=new Date(e.created_at);
+  var ds=d.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"short"})+" · "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  var ini=e.athlete_name.split(" ").map(function(w){return w[0];}).join("").toUpperCase().slice(0,2);
+  var isAlert=e.energy<=3||e.stress>=8||e.mood<=3||(e.pain&&(e.pain.indexOf("Blessure")>=0||e.pain.indexOf("articulaire")>=0));
+  var bc=function(v,hi,lo){return v>=hi?"bdg-g":v>=lo?"bdg-b":"bdg-r";};
+  return '<div class="entry">'
+    +'<div class="entry-top">'
+    +'<div style="display:flex;align-items:center">'
+    +'<div class="avatar">'+ini+'</div>'
+    +'<span class="ename">'+e.athlete_name+'</span>'
+    +(isAlert?' <span class="bdg-red" style="margin-left:8px">⚠️ Alerte</span>':"")
+    +'</div>'
+    +'<span class="edate">'+ds+'</span>'
+    +'</div>'
+    +'<div class="metric-grid">'
+    +'<div class="metric"><div class="v">'+(e.energy||"–")+'<span style="font-size:9px">/10</span></div><div class="l">Énergie</div></div>'
+    +'<div class="metric"><div class="v">'+(e.sleep_duration||"–")+'<span style="font-size:9px">h</span></div><div class="l">Sommeil</div></div>'
+    +'<div class="metric"><div class="v">'+(e.motivation||"–")+'<span style="font-size:9px">/10</span></div><div class="l">Motiv.</div></div>'
+    +'<div class="metric"><div class="v">'+(e.stress||"–")+'<span style="font-size:9px">/10</span></div><div class="l">Stress</div></div>'
+    +'<div class="metric"><div class="v">'+(e.recovery||"–")+'<span style="font-size:9px">/10</span></div><div class="l">Récup.</div></div>'
+    +'</div>'
+    +'<div>'
+    +'<span class="bdg '+bc(e.energy,7,5)+'">Énergie '+e.energy+'/10</span>'
+    +'<span class="bdg '+bc(e.sleep_quality,7,5)+'">Sommeil '+e.sleep_quality+'/10</span>'
+    +(e.pain?'<span class="bdg '+(e.pain==="Aucune"?"bdg-g":e.pain.indexOf("Blessure")>=0?"bdg-r":"bdg-a")+'">'+e.pain+'</span>':"")
+    +(e.sport_type?'<span class="bdg bdg-b">'+e.sport_type+(e.sport_quality?" · "+"★".repeat(e.sport_quality):"")+' </span>':"")
+    +(e.hydration?'<span class="bdg bdg-b">💧 '+e.hydration+'</span>':"")
+    +(e.nutrition_quality?'<span class="bdg bdg-b">🥗 '+e.nutrition_quality+'</span>':"")
+    +'</div>'
+    +(e.notes?'<div class="enote">"'+e.notes+'"</div>':"")
+    +'</div>';
+}
+
+function buildDetails(filtered,names){
+  var filters='<div class="filter-wrap">'
+    +'<span class="filter-chip'+(filterName==="tous"?" on":"")+'" onclick="filterName=\'tous\';renderCoach()">Tous</span>'
+    +names.map(function(n){return '<span class="filter-chip'+(filterName===n?" on":"")+'" onclick="filterName=\''+n+'\';renderCoach()">'+n+'</span>';}).join("")
+    +'</div>';
+
+  if(!filtered.length) return filters+'<div class="empty">Aucun check-in.</div>';
+
+  var cards=filtered.map(function(e){
+    var d=new Date(e.created_at);
+    var ds=d.toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long"})+" · "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    var ini=e.athlete_name.split(" ").map(function(w){return w[0];}).join("").toUpperCase().slice(0,2);
+    return '<div class="entry">'
+      +'<div class="entry-top">'
+      +'<div style="display:flex;align-items:center"><div class="avatar">'+ini+'</div><span class="ename">'+e.athlete_name+'</span></div>'
+      +'<span class="edate">'+ds+'</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:13px;color:#64748B;margin-bottom:8px">'
+      +'<span>💤 '+e.sleep_duration+'h · qualité '+e.sleep_quality+'/10</span>'
+      +'<span>💪 Récup. '+e.recovery+'/10</span>'
+      +'<span>⚡ Énergie '+e.energy+'/10</span>'
+      +'<span>🏋️ Motiv. '+e.motivation+'/10</span>'
+      +'<span>😓 Stress '+e.stress+'/10</span>'
+      +'<span>😊 Humeur '+e.mood+'/10</span>'
+      +'<span>💧 '+(e.hydration||"–")+'</span>'
+      +'<span>🌡️ Fatigue '+e.fatigue+'/10</span>'
+      +'<span>🥗 '+(e.nutrition_quality||"–")+'</span>'
+      +'<span>🍽️ '+(e.meals||"–")+'</span>'
+      +'<span>🎯 '+(e.nutrition_objective||"–")+'</span>'
+      +'<span>🏃 '+(e.sport_type||"–")+(e.sport_quality?" · "+"★".repeat(e.sport_quality):"")+' </span>'
+      +'</div>'
+      +'<div><span class="bdg bdg-b">Douleur : '+(e.pain||"–")+'</span>'
+      +(e.pain_zones&&e.pain_zones!=="Aucune"?'<span class="bdg bdg-r">Zones : '+e.pain_zones+'</span>':"")+'</div>'
+      +(e.notes?'<div class="enote">"'+e.notes+'"</div>':"")
+      +'</div>';
+  }).join("");
+
+  return filters+cards
+    +'<button class="btn-send" style="background:#991B1B;margin-top:8px;font-size:13px;padding:12px" onclick="clearAll()">Effacer toutes les données</button>';
+}
+
+function buildAthletes(existingNames){
+  var baseURL=window.location.href.split("?")[0];
+
+  var list=allAthletes.length===0
+    ?'<div class="empty" style="padding:16px">Aucun élève. Ajoute le premier ci-dessous.</div>'
+    :allAthletes.map(function(a){
+      var url=baseURL+"?athlete="+encodeURIComponent(a.name);
+      var cnt=allData.filter(function(e){return e.athlete_name===a.name;}).length;
+      var last=allData.find(function(e){return e.athlete_name===a.name;});
+      var lastStr=last?new Date(last.created_at).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"}):"jamais";
+      var ini=a.name.split(" ").map(function(w){return w[0];}).join("").toUpperCase().slice(0,2);
+      return '<div>'
+        +'<div class="athl-item">'
+        +'<div class="athl-info">'
+        +'<div class="avatar">'+ini+'</div>'
+        +'<div><div style="font-size:14px;font-weight:700;color:#1E293B">'+a.name+'</div>'
+        +'<div class="athl-meta">'+cnt+' check-in'+(cnt>1?"s":"")+" · dernier : "+lastStr+'</div>'
+        +'</div></div>'
+        +'<div style="display:flex;align-items:center">'
+        +'<button class="copy-btn" onclick="copyLink(\''+a.name+'\',\''+url+'\')">Copier le lien</button>'
+        +'<button class="del-btn" onclick="delAthlete(\''+a.id+'\',\''+a.name+'\')">✕</button>'
+        +'</div></div>'
+        +'<div class="link-url" id="lnk-'+a.id+'" style="display:none">'+url+'</div>'
+        +'</div>';
+    }).join("");
+
+  return '<div class="card">'
+    +'<div class="section-title">Ajouter un élève</div>'
+    +'<input type="text" id="inp-new-athlete" placeholder="Prénom de l\'élève (ex: Olivier)" maxlength="40" '
+    +'style="margin-bottom:10px" onkeydown="if(event.key===\'Enter\')addAthlete()"/>'
+    +'<button class="btn-send" style="padding:12px;font-size:14px" onclick="addAthlete()">Ajouter et générer le lien</button>'
+    +'</div>'
+    +'<div class="card"><div class="section-title">Élèves & liens WhatsApp</div>'+list+'</div>';
+}
+
+function copyLink(name,url){
+  var msg="Bonjour "+name+" ! 👋\n\nVoici ton lien personnalisé pour ton check-in quotidien :\n\n"+url+"\n\nPrend 2 minutes chaque jour pour me tenir informé. À très vite !";
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(function(){
+      alert("✓ Message WhatsApp copié pour "+name+" !\nColle-le directement dans ta conversation.");
+    });
+  } else {
+    alert("Copie ce lien pour "+name+" :\n\n"+url);
+  }
+}
+
+async function addAthlete(){
+  var name=(document.getElementById("inp-new-athlete")||{value:""}).value.trim();
+  if(!name){alert("Entre un prénom.");return;}
+  var r=await db.from("athletes").insert([{name:name}]);
+  if(r.error){alert("Erreur : "+r.error.message);return;}
+  document.getElementById("inp-new-athlete").value="";
+  await loadCoach();
+}
+
+async function delAthlete(id,name){
+  if(!confirm("Supprimer "+name+" de la liste ?")) return;
+  var r=await db.from("athletes").delete().eq("id",id);
+  if(r.error){alert("Erreur : "+r.error.message);return;}
+  await loadCoach();
+}
+
+async function clearAll(){
+  if(!confirm("Effacer TOUS les check-ins ? Cette action est irréversible.")) return;
+  await db.from("checkins").delete().neq("id","00000000-0000-0000-0000-000000000000");
+  await loadCoach();
+}
+
+// ── Init ──
+buildEleve(false);
+buildLogin();
+</script>
+</body>
+</html>
